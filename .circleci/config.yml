@@ -32,7 +32,7 @@ jobs:
 
       - run:
           name: Bundle install
-          command: bundle check || bundle install
+          command: bundle install --path vendor/bundle
 
       # Store bundle cache
       - save_cache:
