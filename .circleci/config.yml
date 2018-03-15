@@ -12,7 +12,7 @@ jobs:
           PGUSER: circle-101
           RAILS_ENV: test
 
-      - image: circleci/postgres:9.6
+      - image: circleci/postgres:9.6.1
         environment:
           POSTGRES_USER: circle-101
           POSTGRES_DB: circle-101_test
@@ -43,9 +43,7 @@ jobs:
 
       # Database setup
       - run: cp config/database.yml.sample config/database.yml
-      - run: bundle exec rake db:create
-      - run: bundle exec rake db:migrate
-      - run: bundle exec rake db:schema:load
+      - run: bundle exec rake db:test:prepare
 
       # run tests!
       - run:
