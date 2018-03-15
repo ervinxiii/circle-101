@@ -47,14 +47,16 @@ jobs:
             - circle-101-yarn-{{ checksum "yarn.lock" }}
             # fallback to using the latest cache if no exact match is found
             - circle-101-yarn-
+
       - run:
           name: Yarn install
           command: yarn install --cache-folder ~/.cache/yarn
+
       # Store yarn cache
       - save_cache:
-        key: circle-101-yarn-{{ "yarn.lock" }}
-        paths:
-          - ~/.cache/yarn
+          key: circle-101-yarn-{{ "yarn.lock" }}
+          paths:
+            - ~/.cache/yarn
 
       # Database setup
       - run:
