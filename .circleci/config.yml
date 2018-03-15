@@ -5,6 +5,7 @@
 version: 2
 jobs:
   build:
+    working_directory: ~/circle-101
     docker:
       - image: circleci/ruby:2.4.2-node-browsers
         environment:
@@ -18,34 +19,50 @@ jobs:
           POSTGRES_DB: circle-101_test
           POSTGRES_PASSWORD: ""
 
-    working_directory: ~/repo
-
     steps:
       - checkout
 
       # Download and cache dependencies
+      # Restore bundle cache
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "Gemfile.lock" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+            - circle-101-bundle-{{ checksum "Gemfile.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - circle-101-bundle-
 
       - run:
-          name: install dependencies
+          name: Bundle install
           command: |
             bundle install --jobs=4 --retry=3 --path vendor/bundle
-            yarn install
 
+      # Store bundle cache
       - save_cache:
+          key: circle-101-bundle-{{ checksum "Gemfile.lock" }}
           paths:
             - ./vendor/bundle
-          key: v1-dependencies-{{ checksum "Gemfile.lock" }}
+
+      # Restore yarn cache
+      - restore_cache:
+          keys:
+            - circle-101-yarn-{{ checksum "yarn.lock" }}
+            # fallback to using the latest cache if no exact match is found
+            - circle-101-yarn-
+      - run:
+          name: Yarn install
+          command: yarn install --cache-folder ~/.cache/yarn
+      # Store yarn cache
+      - save_cache:
+        key: circle-101-yarn-{{ "yarn.lock" }}
+        paths:
+          - ~/.cache/yarn
 
       # Database setup
-      - run: cp config/database.yml.sample config/database.yml
-      - run: bundle exec rake db:create
-      - run: bundle exec rake db:migrate
-      - run: bundle exec rake db:schema:load
+      - run:
+          name: Wait for DB
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+      - run:
+          name: Database setup
+          command: bundle exec rake db:schema:load --trace
 
       # run tests!
       - run:
